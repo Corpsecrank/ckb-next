@@ -846,11 +846,10 @@ void process_input_urb(void* context, unsigned char* buffer, int urblen, ushort 
                         // It is easy to mix up a bragi and an hid packet with just buffer[1] == BRAGI_INPUT_HID
                         if(buffer[1] == BRAGI_INPUT_HID && urblen == 64) {
                             corsair_bragi_mousecopy(targetkb, &targetkb->input, buffer);
-                        } else if(HAS_HID_NO_REPORTID(targetkb)) {
-                            // No Report ID prefix: buttons at byte 0, XY at bytes 1-4 (M65 RGB Ultra)
-                            hid_mouse_translate_noreportid(&targetkb->input, urblen, buffer);
                         } else {
-                            if(USES_BRAGI_SHORT_REPORT(targetkb)) {
+                            // The M65 RGB Ultra's report has no Report ID, so it shares the short layout.
+                            // Its byte 0 buttons must be ignored here, or a held button is released on motion.
+                            if(USES_BRAGI_SHORT_REPORT(targetkb) || HAS_HID_NO_REPORTID(targetkb)) {
                                 if(urblen < 6) {
                                     ckb_err("Bragi HID urblen too short %d < 6", urblen);
                                 } else {
